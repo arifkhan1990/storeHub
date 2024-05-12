@@ -3,28 +3,48 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class Handler extends ExceptionHandler
 {
     /**
-     * The list of the inputs that are never flashed to the session on validation exceptions.
+     * Render an exception into an HTTP response.
      *
-     * @var array<int, string>
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $exception
+     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\Response
      */
-    protected $dontFlash = [
-        'current_password',
-        'password',
-        'password_confirmation',
-    ];
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {
+            return response()->json(['error' => 'Resource not found'], 404);
+        }
+
+        if ($exception instanceof \Illuminate\Validation\ValidationException) {
+            return response()->json(['error' => $exception->errors()], 422);
+        }
+
+        // Handle other exceptions...
+
+        // Log the exception
+        Log::error($exception);
+
+        // Return a generic error response
+        return response()->json(['error' => 'Something went wrong'], 500);
+    }
 
     /**
-     * Register the exception handling callbacks for the application.
+     * Report or log an exception.
+     *
+     * @param  \Throwable  $exception
+     * @return void
      */
-    public function register(): void
+    public function report(Throwable $exception)
     {
-        $this->reportable(function (Throwable $e) {
-            //
-        });
+        parent::report($exception);
     }
 }
