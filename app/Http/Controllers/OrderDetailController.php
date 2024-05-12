@@ -3,62 +3,66 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\OrderDetail;
+use App\Http\Resources\OrderDetailResource;
+use App\Exceptions\NotFoundException;
 
 class OrderDetailController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $orderDetails = OrderDetail::all();
+        return OrderDetailResource::collection($orderDetails);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'order_id' => 'required|integer',
+            'order_details_code' => 'required|string',
+            'product_details_id' => 'required|integer',
+            'order_details_status' => 'required|boolean',
+        ]);
+
+        $orderDetail = OrderDetail::create($request->all());
+        return new OrderDetailResource($orderDetail);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $orderDetail = OrderDetail::find($id);
+        if (!$orderDetail) {
+            throw new NotFoundException('Order detail not found');
+        }
+        return new OrderDetailResource($orderDetail);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $orderDetail = OrderDetail::find($id);
+        if (!$orderDetail) {
+            throw new NotFoundException('Order detail not found');
+        }
+
+        $request->validate([
+            'order_id' => 'required|integer',
+            'order_details_code' => 'required|string',
+            'product_details_id' => 'required|integer',
+            'order_details_status' => 'required|boolean',
+        ]);
+
+        $orderDetail->update($request->all());
+        return new OrderDetailResource($orderDetail);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $orderDetail = OrderDetail::find($id);
+        if (!$orderDetail) {
+            throw new NotFoundException('Order detail not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $orderDetail->delete();
+        return response()->json(['message' => 'Order detail deleted successfully'], 204);
     }
 }

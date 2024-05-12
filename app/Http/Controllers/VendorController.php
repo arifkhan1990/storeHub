@@ -3,62 +3,71 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Vendor;
+use App\Http\Resources\VendorResource;
+use App\Exceptions\NotFoundException;
 
 class VendorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $vendors = Vendor::all();
+        return VendorResource::collection($vendors);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'store_id' => 'required|integer',
+            'vendor_name' => 'required|string',
+            'vendor_code' => 'required|string|unique:vendors,vendor_code',
+            'vendor_desc' => 'required|string',
+            'vendor_pic' => 'required|string',
+            'vendor_details' => 'required|json',
+            'vendor_status' => 'required|boolean',
+        ]);
+
+        $vendor = Vendor::create($request->all());
+        return new VendorResource($vendor);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $vendor = Vendor::find($id);
+        if (!$vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
+        return new VendorResource($vendor);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $vendor = Vendor::find($id);
+        if (!$vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
+
+        $request->validate([
+            'store_id' => 'required|integer',
+            'vendor_name' => 'required|string',
+            'vendor_code' => 'required|string|unique:vendors,vendor_code,' . $id,
+            'vendor_desc' => 'required|string',
+            'vendor_pic' => 'required|string',
+            'vendor_details' => 'required|json',
+            'vendor_status' => 'required|boolean',
+        ]);
+        $vendor->update($request->all());
+        return new VendorResource($vendor);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $vendor = Vendor::find($id);
+        if (!$vendor) {
+            throw new NotFoundException('Vendor not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $vendor->delete();
+        return response()->json(['message' => 'Vendor deleted successfully'], 204);
     }
 }

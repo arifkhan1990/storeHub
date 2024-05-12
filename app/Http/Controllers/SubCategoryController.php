@@ -3,62 +3,70 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\SubCategory;
+use App\Http\Resources\SubCategoryResource;
+use App\Exceptions\NotFoundException;
 
 class SubCategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $subCategories = SubCategory::all();
+        return SubCategoryResource::collection($subCategories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'category_id' => 'required|integer',
+            'sub_category_name' => 'required|string',
+            'sub_category_code' => 'required|string|unique:sub_categories',
+            'sub_category_desc' => 'required|string',
+            'sub_category_pic' => 'nullable|string',
+            'sub_category_status' => 'required|boolean',
+        ]);
+
+        $subCategory = SubCategory::create($request->all());
+        return new SubCategoryResource($subCategory);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $subCategory = SubCategory::find($id);
+        if (!$subCategory) {
+            throw new NotFoundException('SubCategory not found');
+        }
+        return new SubCategoryResource($subCategory);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $subCategory = SubCategory::find($id);
+        if (!$subCategory) {
+            throw new NotFoundException('SubCategory not found');
+        }
+
+        $request->validate([
+            'category_id' => 'required|integer',
+            'sub_category_name' => 'required|string',
+            'sub_category_code' => 'required|string|unique:sub_categories,sub_category_code,' . $id,
+            'sub_category_desc' => 'required|string',
+            'sub_category_pic' => 'nullable|string',
+            'sub_category_status' => 'required|boolean',
+        ]);
+
+        $subCategory->update($request->all());
+        return new SubCategoryResource($subCategory);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $subCategory = SubCategory::find($id);
+        if (!$subCategory) {
+            throw new NotFoundException('SubCategory not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $subCategory->delete();
+        return response()->json(['message' => 'SubCategory deleted successfully'], 204);
     }
 }

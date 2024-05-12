@@ -3,62 +3,64 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\GainPointHistory;
+use App\Exceptions\NotFoundException;
+use App\Http\Resources\GainPointHistoryResource;
 
 class GainPointHistoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $histories = GainPointHistory::all();
+        return GainPointHistoryResource::collection($histories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'order_id' => 'required|integer',
+            'gain_point' => 'required|integer',
+            'point_id' => 'required|integer',
+        ]);
+
+        $history = GainPointHistory::create($request->all());
+        return new GainPointHistoryResource($history);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $history = GainPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Gain point history not found');
+        }
+        return new GainPointHistoryResource($history);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $history = GainPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Gain point history not found');
+        }
+
+        $request->validate([
+            'order_id' => 'required|integer',
+            'gain_point' => 'required|integer',
+            'point_id' => 'required|integer',
+        ]);
+
+        $history->update($request->all());
+        return new GainPointHistoryResource($history);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $history = GainPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Gain point history not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $history->delete();
+        return response()->json(['message' => 'Gain point history deleted successfully'], 204);
     }
 }

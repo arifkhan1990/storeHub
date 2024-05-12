@@ -3,62 +3,80 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ProductDetail;
+use App\Http\Resources\ProductDetailResource;
+use App\Exceptions\NotFoundException;
 
 class ProductDetailController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $productDetails = ProductDetail::all();
+        return ProductDetailResource::collection($productDetails);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'product_id' => 'required|integer',
+            'product_details_code' => 'required|string',
+            'product_desc' => 'required|string',
+            'product_pic' => 'required|array',
+            'product_color' => 'required|array',
+            'product_size' => 'required|array',
+            'product_price' => 'required|array',
+            'product_status' => 'required|boolean',
+            'variants' => 'required|array',
+            'stock' => 'integer',
+            'stock_status' => 'required|integer',
+        ]);
+
+        $productDetail = ProductDetail::create($request->all());
+        return new ProductDetailResource($productDetail);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $productDetail = ProductDetail::find($id);
+        if (!$productDetail) {
+            throw new NotFoundException('Product Detail not found');
+        }
+        return new ProductDetailResource($productDetail);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $productDetail = ProductDetail::find($id);
+        if (!$productDetail) {
+            throw new NotFoundException('Product Detail not found');
+        }
+
+        $request->validate([
+            'product_id' => 'required|integer',
+            'product_details_code' => 'required|string',
+            'product_desc' => 'required|string',
+            'product_pic' => 'required|array',
+            'product_color' => 'required|array',
+            'product_size' => 'required|array',
+            'product_price' => 'required|array',
+            'product_status' => 'required|boolean',
+            'variants' => 'required|array',
+            'stock' => 'integer',
+            'stock_status' => 'required|integer',
+        ]);
+
+        $productDetail->update($request->all());
+        return new ProductDetailResource($productDetail);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $productDetail = ProductDetail::find($id);
+        if (!$productDetail) {
+            throw new NotFoundException('Product Detail not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $productDetail->delete();
+        return response()->json(['message' => 'Product Detail deleted successfully'], 204);
     }
 }

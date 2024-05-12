@@ -3,62 +3,60 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Attribute;
+use App\Http\Resources\AttributeResource;
+use App\Exceptions\NotFoundException;
 
-class AttributeController extends Controller
+class AttributesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $attributes = Attribute::all();
+        return AttributeResource::collection($attributes);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|unique:attributes',
+        ]);
+
+        $attribute = Attribute::create($request->all());
+        return new AttributeResource($attribute);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $attribute = Attribute::find($id);
+        if (!$attribute) {
+            throw new NotFoundException('Attribute not found');
+        }
+        return new AttributeResource($attribute);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $attribute = Attribute::find($id);
+        if (!$attribute) {
+            throw new NotFoundException('Attribute not found');
+        }
+
+        $request->validate([
+            'name' => 'required|string|unique:attributes,name,' . $id,
+        ]);
+
+        $attribute->update($request->all());
+        return new AttributeResource($attribute);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $attribute = Attribute::find($id);
+        if (!$attribute) {
+            throw new NotFoundException('Attribute not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $attribute->delete();
+        return response()->json(['message' => 'Attribute deleted successfully'], 204);
     }
 }

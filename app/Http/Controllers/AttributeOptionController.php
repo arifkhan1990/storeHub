@@ -3,62 +3,62 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AttributeOption;
+use App\Http\Resources\AttributeOptionResource;
+use App\Exceptions\NotFoundException;
 
 class AttributeOptionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $attributeOptions = AttributeOption::all();
+        return AttributeOptionResource::collection($attributeOptions);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'attribute_id' => 'required|integer',
+            'value' => 'required|string|unique:attribute_options',
+        ]);
+
+        $attributeOption = AttributeOption::create($request->all());
+        return new AttributeOptionResource($attributeOption);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $attributeOption = AttributeOption::find($id);
+        if (!$attributeOption) {
+            throw new NotFoundException('Attribute option not found');
+        }
+        return new AttributeOptionResource($attributeOption);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $attributeOption = AttributeOption::find($id);
+        if (!$attributeOption) {
+            throw new NotFoundException('Attribute option not found');
+        }
+
+        $request->validate([
+            'attribute_id' => 'required|integer',
+            'value' => 'required|string|unique:attribute_options,value,' . $id,
+        ]);
+
+        $attributeOption->update($request->all());
+        return new AttributeOptionResource($attributeOption);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $attributeOption = AttributeOption::find($id);
+        if (!$attributeOption) {
+            throw new NotFoundException('Attribute option not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $attributeOption->delete();
+        return response()->json(['message' => 'Attribute option deleted successfully'], 204);
     }
 }

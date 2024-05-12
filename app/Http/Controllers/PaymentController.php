@@ -3,62 +3,68 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Payment;
+use App\Exceptions\NotFoundException;
+use App\Http\Resources\PaymentResource;
 
-class PaymentController extends Controller
+class PaymentsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $payments = Payment::all();
+        return PaymentResource::collection($payments);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'payment_code' => 'required|string|unique:payments',
+            'store_id' => 'required|integer',
+            'payment_type' => 'required|string',
+            'payment_details' => 'required|array',
+            'payment_status' => 'required|boolean',
+        ]);
+
+        $payment = Payment::create($request->all());
+        return new PaymentResource($payment);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $payment = Payment::find($id);
+        if (!$payment) {
+            throw new NotFoundException('Payment not found');
+        }
+        return new PaymentResource($payment);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $payment = Payment::find($id);
+        if (!$payment) {
+            throw new NotFoundException('Payment not found');
+        }
+
+        $request->validate([
+            'payment_code' => 'required|string|unique:payments,payment_code,' . $id,
+            'store_id' => 'required|integer',
+            'payment_type' => 'required|string',
+            'payment_details' => 'required|array',
+            'payment_status' => 'required|boolean',
+        ]);
+
+        $payment->update($request->all());
+        return new PaymentResource($payment);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $payment = Payment::find($id);
+        if (!$payment) {
+            throw new NotFoundException('Payment not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $payment->delete();
+        return response()->json(['message' => 'Payment deleted successfully'], 204);
     }
 }

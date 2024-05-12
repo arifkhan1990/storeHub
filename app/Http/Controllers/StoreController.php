@@ -3,62 +3,98 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Store;
+use App\Http\Resources\StoreResource;
+use App\Exceptions\NotFoundException;
 
 class StoreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $stores = Store::all();
+        return StoreResource::collection($stores);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'store_code' => 'required|string|unique:stores',
+            'store_name' => 'required|string|unique:stores',
+            'store_type' => 'required|string',
+            'store_desc' => 'nullable|string',
+            'created_by' => 'required|integer',
+            'store_email' => 'required|array',
+            'store_email.*' => 'email',
+            'store_physical_address' => 'required|array',
+            'store_phone' => 'required|array',
+            'fb_page_link' => 'nullable|array',
+            'instagram_page_link' => 'nullable|array',
+            'tiktok_page_like' => 'nullable|array',
+            'linkedin_page_link' => 'nullable|array',
+            'store_bio' => 'nullable|string',
+            'business_tin' => 'nullable|string',
+            'owner_details' => 'required|array',
+            'store_status' => 'required|boolean',
+            'store_pic' => 'nullable|string',
+            'priority' => 'nullable|integer',
+            // Add validation rules for other fields
+        ]);
+
+        $store = Store::create($request->all());
+        return new StoreResource($store);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $store = Store::find($id);
+        if (!$store) {
+            throw new NotFoundException('Store not found');
+        }
+        return new StoreResource($store);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $store = Store::find($id);
+        if (!$store) {
+            throw new NotFoundException('Store not found');
+        }
+
+        $request->validate([
+            'store_code' => 'required|string|unique:stores',
+            'store_name' => 'required|string|unique:stores',
+            'store_type' => 'required|string',
+            'store_desc' => 'nullable|string',
+            'created_by' => 'required|integer',
+            'store_email' => 'required|array',
+            'store_email.*' => 'email',
+            'store_physical_address' => 'required|array',
+            'store_phone' => 'required|array',
+            'fb_page_link' => 'nullable|array',
+            'instagram_page_link' => 'nullable|array',
+            'tiktok_page_like' => 'nullable|array',
+            'linkedin_page_link' => 'nullable|array',
+            'store_bio' => 'nullable|string',
+            'business_tin' => 'nullable|string',
+            'owner_details' => 'required|array',
+            'store_status' => 'required|boolean',
+            'store_pic' => 'nullable|string',
+            'priority' => 'nullable|integer',
+            // Add validation rules for other fields
+        ]);
+
+        $store->update($request->all());
+        return new StoreResource($store);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $store = Store::find($id);
+        if (!$store) {
+            throw new NotFoundException('Store not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $store->delete();
+        return response()->json(['message' => 'Store deleted successfully'], 204);
     }
 }

@@ -3,62 +3,68 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Event;
+use App\Exceptions\NotFoundException;
+use App\Http\Resources\EventResource;
 
-class EventController extends Controller
+class EventsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $events = Event::all();
+        return EventResource::collection($events);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'event_title' => 'required|string',
+            'event_desc' => 'required|string',
+            'event_code' => 'required|string|unique:events',
+            'store_id' => 'required|integer',
+            'event_status' => 'required|boolean',
+        ]);
+
+        $event = Event::create($request->all());
+        return new EventResource($event);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $event = Event::find($id);
+        if (!$event) {
+            throw new NotFoundException('Event not found');
+        }
+        return new EventResource($event);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $event = Event::find($id);
+        if (!$event) {
+            throw new NotFoundException('Event not found');
+        }
+
+        $request->validate([
+            'event_title' => 'required|string',
+            'event_desc' => 'required|string',
+            'event_code' => 'required|string|unique:events,event_code,' . $id,
+            'store_id' => 'required|integer',
+            'event_status' => 'required|boolean',
+        ]);
+
+        $event->update($request->all());
+        return new EventResource($event);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $event = Event::find($id);
+        if (!$event) {
+            throw new NotFoundException('Event not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $event->delete();
+        return response()->json(['message' => 'Event deleted successfully'], 204);
     }
 }

@@ -3,62 +3,66 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\AccessPointHistory;
+use App\Exceptions\NotFoundException;
+use App\Http\Resources\AccessPointHistoryResource;
 
 class AccessPointHistoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $histories = AccessPointHistory::all();
+        return AccessPointHistoryResource::collection($histories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'coupon_id' => 'required|integer',
+            'order_id' => 'required|integer',
+            'access_point' => 'required|integer',
+            'point_id' => 'required|integer',
+        ]);
+
+        $history = AccessPointHistory::create($request->all());
+        return new AccessPointHistoryResource($history);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $history = AccessPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Access point history not found');
+        }
+        return new AccessPointHistoryResource($history);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $history = AccessPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Access point history not found');
+        }
+
+        $request->validate([
+            'coupon_id' => 'required|integer',
+            'order_id' => 'required|integer',
+            'access_point' => 'required|integer',
+            'point_id' => 'required|integer',
+        ]);
+
+        $history->update($request->all());
+        return new AccessPointHistoryResource($history);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $history = AccessPointHistory::find($id);
+        if (!$history) {
+            throw new NotFoundException('Access point history not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $history->delete();
+        return response()->json(['message' => 'Access point history deleted successfully'], 204);
     }
 }

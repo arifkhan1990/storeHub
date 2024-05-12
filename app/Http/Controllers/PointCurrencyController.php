@@ -3,62 +3,66 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\PointCurrency;
+use App\Exceptions\NotFoundException;
+use App\Http\Resources\PointCurrencyResource;
 
 class PointCurrencyController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $currencies = PointCurrency::all();
+        return PointCurrencyResource::collection($currencies);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'point_id' => 'required|integer',
+            'point_amount' => 'required|integer',
+            'currency_amount' => 'required|numeric',
+            'status' => 'required|boolean',
+        ]);
+
+        $currency = PointCurrency::create($request->all());
+        return new PointCurrencyResource($currency);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $currency = PointCurrency::find($id);
+        if (!$currency) {
+            throw new NotFoundException('Point currency not found');
+        }
+        return new PointCurrencyResource($currency);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $currency = PointCurrency::find($id);
+        if (!$currency) {
+            throw new NotFoundException('Point currency not found');
+        }
+
+        $request->validate([
+            'point_id' => 'required|integer',
+            'point_amount' => 'required|integer',
+            'currency_amount' => 'required|numeric',
+            'status' => 'required|boolean',
+        ]);
+
+        $currency->update($request->all());
+        return new PointCurrencyResource($currency);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $currency = PointCurrency::find($id);
+        if (!$currency) {
+            throw new NotFoundException('Point currency not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $currency->delete();
+        return response()->json(['message' => 'Point currency deleted successfully'], 204);
     }
 }

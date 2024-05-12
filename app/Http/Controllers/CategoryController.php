@@ -3,62 +3,68 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Http\Resources\CategoryResource;
+use App\Exceptions\NotFoundException;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $categories = Category::all();
+        return CategoryResource::collection($categories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'category_name' => 'required|string',
+            'category_code' => 'required|string|unique:categories',
+            'category_desc' => 'nullable|string',
+            'category_pic' => 'nullable|string',
+            'category_status' => 'required|boolean',
+        ]);
+
+        $category = Category::create($request->all());
+        return new CategoryResource($category);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        $category = Category::find($id);
+        if (!$category) {
+            throw new NotFoundException('Category not found');
+        }
+        return new CategoryResource($category);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $category = Category::find($id);
+        if (!$category) {
+            throw new NotFoundException('Category not found');
+        }
+
+        $request->validate([
+            'category_name' => 'required|string',
+            'category_code' => 'required|string|unique:categories,category_code,' . $id,
+            'category_desc' => 'nullable|string',
+            'category_pic' => 'nullable|string',
+            'category_status' => 'required|boolean',
+        ]);
+
+        $category->update($request->all());
+        return new CategoryResource($category);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $category = Category::find($id);
+        if (!$category) {
+            throw new NotFoundException('Category not found');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $category->delete();
+        return response()->json(['message' => 'Category deleted successfully'], 204);
     }
 }
